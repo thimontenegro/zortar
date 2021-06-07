@@ -1,6 +1,4 @@
 import math
-from PIL.Image import alpha_composite
-from altair.vegalite.v4.schema.channels import Opacity
 import streamlit as st
 import pandas as pd
 import mysql.connector
@@ -12,10 +10,10 @@ import altair as alt
 import plotly.graph_objects as go
 class DataBase():
     global USER, PASS, HOST, DATABASE
-    USER = 'app_ETL_MP'
-    HOST = '20.69.216.47'
-    PASS = 'gxwLsSgSQxQ'
-    DATABASE = 'etl'
+    USER = st.secrets['USER']#'app_ETL_MP'
+    HOST = st.secrets['HOST']#20.69.216.47'
+    PASS = st.secrets['PASS']#'gxwLsSgSQxQ'
+    DATABASE = st.secrets['DATABASE'] #'etl'
     
     def __init__(self):
         self.user = "app_ETL_MP"
@@ -42,6 +40,7 @@ class DataBase():
 
     def get_apps(self):
         apps = pd.DataFrame({})
+    
         try:
             mydb = self._get_db()
             cursor = mydb.cursor()
@@ -105,15 +104,14 @@ class DataHandler():
         df_copy['Aquisição de Usuários'] = novos_valores_aquisicao.astype(int)
         df_copy['Visitas ao Perfil'] = novas_visitas_originais.astype(int)
         df_copy = df_copy.drop(['appId', 'position'],axis = 1)
-        st.write(df_copy)
         predictions = model.predict(df_copy)
         predictions = [1 if pred <= 1 else pred for pred in predictions]
         rounded_predictions = np.round(predictions)
         predictions = np.abs(rounded_predictions)
-        st.write(predictions)
         predictions_series = self.fix_outliers(predictions)
         df_final = pd.DataFrame({'date': df.index, "position": predictions_series})
         df_final = df_final.set_index('date')
+        df_final['appId'] = str(df['appId'].iloc[0])
         return df_final
       
 
@@ -171,12 +169,12 @@ class DataHandler():
                         predictions_series.iloc[ind] = fixed_position
         
         return predictions_series
-    
-    def _plot_forecast(self, data, X, train_size, flag_new_preds = False):
+   
+    def _plot_forecast(self, data, X, train_size, flag_new_preds = False, df_concorrente = pd.DataFrame({})):
         data['yhat'] = round(data['yhat'],0)
-    
+        
         yhat = data['yhat'].tolist()
-      
+
         data['yhat'] = [1 if pred <= 1 else pred for pred in yhat]
      
         data['yhat_lower'] = round(data['yhat_lower'],0)
@@ -189,7 +187,15 @@ class DataHandler():
       
         data['yhat_lower'] = np.abs(data['yhat_lower'])
         data['yhat_upper'] = np.abs(data['yhat_upper'])
- 
+        if df_concorrente.shape[0] != 0:
+            df_concorrente['yhat'] = round(df_concorrente['yhat'], 0)
+            yhat_concorrente = df_concorrente['yhat'].tolist()
+            df_concorrente['yhat'] = [1 if pred <= 1 else pred for pred in yhat_concorrente]
+            df_concorrente['yhat_lower'] = round(df_concorrente['yhat_lower'],0)
+            yhat_lower_concorrente = df_concorrente['yhat_lower'].tolist()
+            df_concorrente['yhat'] = [1 if pred <= 1 else pred for pred in yhat_lower_concorrente]
+            df_concorrente['yhat_upper'] = round(df_concorrente['yhat_upper'], 0)
+            df_concorrente['yhat_lower'] = np.abs(df_concorrente['yhat_lower'])
         """
         fig, ax = plt.subplots(figsize = (20,10))
         ax.plot(X[0:train_size].index, X[0:train_size].values, label = 'Valores Observados', color = '#2574BF')
@@ -202,49 +208,58 @@ class DataHandler():
         ax.legend()
         st.pyplot(fig)
         """
-        ts = pd.DataFrame(X[0:train_size].reset_index())
-        ts['label'] = 'Valores Observados'
-        ts_2 = pd.DataFrame({"date": data['ds'][-10:], "previsto": data['yhat'][-10:]})
-        ts_2['label'] = 'Previsões de Posição de Categoria'
-        ts_3 = pd.DataFrame(X[train_size:train_size+5].reset_index())
-        ts_3['label'] = 'Valores Reais'
-        fill_between = pd.DataFrame({"date": data['ds'][-10:], "yhat_lower": data['yhat_lower'][-10:], "yhat_upper": data['yhat_upper'][-10:]})
         _df = pd.DataFrame({})
         if flag_new_preds != False:
             _df = data.set_index('ds')
             X = _df['position']
            
-
         fig = go.Figure()
         fig.add_trace(go.Scatter(x = X[0:train_size].index, y= X[0:train_size].values,
-                                 mode = 'lines',name='Valores Observados'))
-        fig.add_trace(go.Scatter(x =data['ds'][-10:],y = data['yhat_lower'][-10:].values,mode = 'lines',fill= None, name = 'Limite Inferior', showlegend = False, line = dict(color = 'lightgray')))
-        fig.add_trace(go.Scatter(x = data['ds'][-10:], y = data['yhat_upper'][-10:].values, opacity = 0.1,showlegend = False, fill = 'tonexty', name = 'Limite Superior', mode ='lines', line=dict(color = 'lightgray')))
+                                 mode = 'lines',name='Observados',  connectgaps=True, line = dict(color = '#1A88FF')))
+        fig.add_trace(go.Scatter(x =data['ds'][-10:],y = data['yhat_lower'][-10:].values,mode = 'lines',fill= None, name = 'LI', showlegend = False, line = dict(color = 'lightgray')))
+        fig.add_trace(go.Scatter(x = data['ds'][-10:], y = data['yhat_upper'][-10:].values, opacity = 0.1, showlegend = False, fill = 'tonexty', name = 'LS', mode ='lines', line=dict(color = 'lightgray')))
 
         fig.add_trace(go.Scatter(
             x = data['ds'][-10:],
             y = data['yhat'][-10:].values, opacity = 0.7,
-            mode = 'lines', name = 'Previsões de Posição de Categoria', line = dict(color = 'firebrick')
+            mode = 'lines', name = 'Previsões de Posição de Categoria', line = dict(color = 'firebrick', dash = 'dot'),  connectgaps=True
         ))
+        if df_concorrente.shape[0] != 0:
+            aplicativos_concorrentes = df_concorrente['appId'].unique()
+            colors = ["#0BD6D4","#6658CB",'#FACA00','#6DD230',"#FF5A60"]
+            colors_prediction = ['#d63e0b','#cb9958','#9a00fa','#d2306e','#60ff5a']
+            i = 0
+            for app in aplicativos_concorrentes:
+                app_atual = df_concorrente[df_concorrente['appId'] == app]
+                fig.add_trace(go.Scatter(
+                    x = app_atual[0:train_size]['ds'],
+                    y = app_atual[0:train_size]['position'], mode = 'lines', name = f'Observados do {app}', opacity = 0.28, line = dict(color=colors[i])
+                ))
+                fig.add_trace(go.Scatter(
+                    x = app_atual['ds'][-10:],
+                    y = app_atual['yhat'][-10:].values, mode = 'lines', name = f"Previsão {app}", connectgaps=True, opacity = 0.33, line = dict(color = colors_prediction[i], dash = 'dot')
+                ))
+                i += 1
         fig.update_xaxes(rangeslider_visible=True)
-     
-        fig.update_layout(title ='Previsão do Aplicativo nos próximos dias',
+        st.markdown(f"<p style = 'text-align: center'> Previsões da Posição da Categoria do Aplicativo: <b style = 'color: #1A88FF'>{data['appId'].iloc[0]}</b></p>", True)
+        fig.update_layout(
                           showlegend = True,
                           legend=dict(
-                                orientation="h",
+                                orientation="v",
                                 yanchor="bottom",
-                                y=1.02,
+                                x=1,
+                                y = 1.03,
                                 xanchor="right",
-                                x=1
+                              
                         ),
-                          legend_title = 'Legenda',
-                          xaxis_title = 'Data',
-                          yaxis_title = 'Posição',
-                          height = 600,
-                          width = 800,
-                          #hovermode = 'x',
-                          template = 'plotly_white'
-                          )
+                        xaxis_title = 'Data',
+                        yaxis_title = 'Posição',
+                        height = 600,
+                        width = 800,
+                        hovermode = 'x unified',
+                        template = 'plotly_white',
+                        plot_bgcolor="white",
+                        )
         st.plotly_chart(fig,use_container_width=True)
         
         data['ds'] = data['ds'].dt.strftime("%d/%m/%Y")
@@ -255,22 +270,28 @@ class DataHandler():
         previsoes = previsoes.rename(columns = {'yhat_upper': 'Posição máx prevista'})
         st.write(previsoes) 
         return previsoes                       
-    def forecast_concorrentes(self, app):
+    def _forecast_concorrentes(self, app):
         app = app.set_index("date")
-        ts = app[['position']]
-        X = ts['position']
-        
-        train_size = int(len(X) * 0.90)
-        df_train = pd.DataFrame({'ds': X.index,
-                                 'y': X.values})
-        prophet = Prophet(changepoint_prior_scale=0.3, holidays_prior_scale=0.3,
-                          n_changepoints= 150, seasonality_mode='additive')
-        prophet.fit(df_train)
-        future = prophet.make_future_dataframe(10)
-        p = prophet.predict(future)
-        return p 
+        app_names = app['appId'].unique()
+        prophet_forecast_df = pd.DataFrame({})
+        for app_name_concorrente in app_names:
+            app_atual = app[app['appId'] == app_name_concorrente]
+            ts = app_atual[['position']]
+            X = ts['position']
+            train_size = int(len(X) * 0.90)
+            df_train = pd.DataFrame({'ds': X.index,
+                                    'y': X.values})
+            prophet = Prophet(changepoint_prior_scale=0.3, holidays_prior_scale=0.3,
+                            n_changepoints= 150, seasonality_mode='additive')
+            prophet.fit(df_train)
+            future = prophet.make_future_dataframe(10)
+            p = prophet.predict(future)
+            p['appId'] = app_name_concorrente
+            p['position'] = pd.Series(app_atual['position'].tolist())
+            prophet_forecast_df = pd.concat([prophet_forecast_df, p])
+        return prophet_forecast_df
     
-    def forecast_data(self, app,df_original = None):
+    def forecast_data(self, app, df_original = None, df_concorrente = None):
         ts = app[['position']]
         X = ts['position']
         train_size = int(len(X) * 0.90)
@@ -283,10 +304,10 @@ class DataHandler():
         future = prophet.make_future_dataframe(10)
         p = prophet.predict(future)
         flag = False
-        if df_original != None:
-            p = pd.concat([p, pd.DataFrame(df_original['position'].reset_index().drop('date',axis = 1))],axis = 1)
-            flag = True 
-        self._plot_forecast(p, X, int(len(X)), flag)
+        p = pd.concat([p, pd.DataFrame(df_original['position'].reset_index().drop('date',axis = 1))],axis = 1)
+        flag = True 
+        p['appId'] = app['appId'].iloc[0]
+        self._plot_forecast(p, X, int(len(X)), flag, df_concorrente)
         
   
         
@@ -297,10 +318,11 @@ class Application():
         self.data_handler = DataHandler()
         
     def _render_header(self):
-        st.markdown('<h1 style = "border-radius: 50px; color: #FFFFFF;text-align:center;text-transform: uppercase; background:-webkit-linear-gradient(#FD6E1B, #DB2F40);">Zortar - MVP</h1>',unsafe_allow_html=True)
+        st.image('assets/Rankmyvidente (1).png')
+        st.markdown('<h1 style = "border-radius: 50px; color: #FFFFFF;text-align:center;text-transform: uppercase; background:-webkit-linear-gradient(#1A88FF, #0bd6d4);">RankMyVidente</h1>',unsafe_allow_html=True)
         st.text("")
         st.text("")
-        st.markdown("<p style = 'text-align: center; color: #7E7E7E; font-size: 20px'>Plataforma em estágio MVP, que permite a predição da categoria dos próximos dias.</p>", unsafe_allow_html=True )
+        st.markdown("<p style = 'text-align: center; color: #7E7E7E; font-size: 20px'>Plataforma em estágio MVP, que permite verificar a posição da categoria dos próximos dias.</p>", unsafe_allow_html=True )
 
   
     def _render_escolha_apps(self):
@@ -309,39 +331,37 @@ class Application():
         app = self.data_handler.create_dummies(app,'Category')
         app = self.data_handler.create_dummies(app, 'position_category')
         app = self.data_handler.create_dummies(app, 'score_cat')
+        st.markdown("<p style = 'text-align: center'>Por favor, selecione o aplicativo que deseja realizar a predição da posição nós próximos dias.</p>", True)
         aplicativo = st.selectbox('', app['appId'].unique())
         df_concorrente = pd.DataFrame({})
+        st.markdown("<p style = 'text-align: center'>Por favor, selecione até 5 aplicativos concorrentes para análise.</p>", True)
         aplicativos_concorrentes = st.multiselect("",app['appId'].unique())
         aplicativo_escolhido = app[app['appId'] == aplicativo]
-        if len(df_concorrente) != 0:
+        if len(aplicativos_concorrentes) != 0:
             for app_concorrente in aplicativos_concorrentes:
                  app_atual = app[app['appId'] == app_concorrente]
+                 app_atual['date'] = pd.to_datetime(app_atual['date'])
                  df_concorrente = pd.concat([df_concorrente, app_atual])
-        st.write(df_concorrente)
-        return aplicativo_escolhido
+        return aplicativo_escolhido, df_concorrente
         ##depois que seleciona o app
     
-    def _render_new_positions(self, aplicativo_escolhido, ):
+    def _render_new_positions(self, aplicativo_escolhido, df_concorrente):
         st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
         loaded_model = joblib.load(open('lgb_regressor (1).pkl', 'rb'))
         aplicativo_escolhido = aplicativo_escolhido.set_index("date")
-        value = st.slider("Quantas downloads vc quer?", 0,25,step = 5)
-        st.write(value)
+        value = st.slider("Informe a porcentagem, de Downloads a mais para Predição do seu Aplicativo.", 0,25,step = 5)
+        if df_concorrente.shape[0] != 0:
+            df_concorrente = self.data_handler._forecast_concorrentes(df_concorrente)
         if value != 0:
             predictions = self.data_handler.create_new_positions(aplicativo_escolhido, value, loaded_model)  
-            st.write("predicoes")  
-            st.write(predictions)
-            self.data_handler.forecast_data(predictions, aplicativo_escolhido)
+            self.data_handler.forecast_data(predictions, aplicativo_escolhido, df_concorrente)
         else: 
-            self.data_handler.forecast_data(aplicativo_escolhido)
-
-    
-    
-        
+            self.data_handler.forecast_data(aplicativo_escolhido, aplicativo_escolhido, df_concorrente)  
+      
     def render_app(self):
         self._render_header()
-        aplicativo_escolhido= self._render_escolha_apps()
-        self._render_new_positions(aplicativo_escolhido)
+        aplicativo_escolhido, df_concorrente = self._render_escolha_apps()
+        self._render_new_positions(aplicativo_escolhido, df_concorrente)
 
 mvp = Application()
 mvp.render_app()
