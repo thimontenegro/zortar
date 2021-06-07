@@ -1,0 +1,108 @@
+altair==4.1.0
+argon2-cffi==20.1.0
+arviz @ file:///home/conda/feedstock_root/build_artifacts/arviz_1618947141331/work
+astor==0.8.1
+async-generator==1.10
+attrs==21.2.0
+backcall==0.2.0
+base58==2.1.0
+bleach==3.3.0
+blinker==1.4
+cachetools==4.2.2
+certifi==2020.12.5
+cffi==1.14.5
+cftime @ file:///D:/bld/cftime_1621553914127/work
+chardet==4.0.0
+click==7.1.2
+colorama==0.4.4
+convertdate @ file:///home/conda/feedstock_root/build_artifacts/convertdate_1615678826465/work
+cycler==0.10.0
+Cython @ file:///D:/bld/cython_1618445481531/work
+decorator==5.0.9
+defusedxml==0.7.1
+entrypoints==0.3
+ephem @ file:///D:/bld/ephem_1602326724695/work
+fbprophet @ file:///D:/bld/fbprophet_1599365958928/work
+gitdb==4.0.7
+GitPython==3.1.17
+hijri-converter @ file:///home/conda/feedstock_root/build_artifacts/hijri-converter_1612531902526/work
+holidays @ file:///home/conda/feedstock_root/build_artifacts/holidays_1617373843485/work
+idna==2.10
+ipykernel==5.5.5
+ipython==7.23.1
+ipython-genutils==0.2.0
+ipywidgets==7.6.3
+jedi==0.18.0
+Jinja2==3.0.1
+joblib==1.0.1
+jsonschema==3.2.0
+jupyter-client==6.1.12
+jupyter-core==4.7.1
+jupyterlab-pygments==0.1.2
+jupyterlab-widgets==1.0.0
+kiwisolver @ file:///D:/bld/kiwisolver_1610099948875/work
+korean-lunar-calendar @ file:///home/conda/feedstock_root/build_artifacts/korean_lunar_calendar_1589354365811/work
+lightgbm==3.2.1
+LunarCalendar==0.0.9
+MarkupSafe==2.0.1
+matplotlib @ file:///D:/bld/matplotlib-suite_1620506206452/work
+matplotlib-inline==0.1.2
+mistune==0.8.4
+mysql-connector-python==8.0.25
+nbclient==0.5.3
+nbconvert==6.0.7
+nbformat==5.1.3
+nest-asyncio==1.5.1
+netCDF4 @ file:///D:/bld/netcdf4_1618867945328/work
+notebook==6.4.0
+numpy @ file:///D:/bld/numpy_1621506450533/work
+olefile @ file:///home/conda/feedstock_root/build_artifacts/olefile_1602866521163/work
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1612459636436/work
+pandas @ file:///D:/bld/pandas_1618263791034/work
+pandocfilters==1.4.3
+parso==0.8.2
+pickleshare==0.7.5
+Pillow @ file:///D:/bld/pillow_1621288193589/work
+plotly==4.14.3
+prometheus-client==0.10.1
+prompt-toolkit==3.0.18
+protobuf==3.17.1
+pyarrow==4.0.0
+pycparser==2.20
+pydeck==0.6.2
+Pygments==2.9.0
+PyMeeus @ file:///home/conda/feedstock_root/build_artifacts/pymeeus_1615809745702/work
+pyparsing==2.4.7
+pyrsistent==0.17.3
+pystan==2.19.1.1
+python-dateutil==2.8.1
+pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1612179539967/work
+pywin32==300
+pywinpty==1.1.1
+pyzmq==22.1.0
+requests==2.25.1
+retrying==1.3.3
+scikit-learn==0.24.2
+scipy @ file:///C:/bld/scipy_1619562091939/work
+Send2Trash==1.5.0
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
+smmap==4.0.0
+streamlit==0.82.0
+terminado==0.10.0
+testpath==0.5.0
+threadpoolctl==2.1.0
+toml==0.10.2
+toolz==0.11.1
+tornado @ file:///D:/bld/tornado_1610094858390/work
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1621890532941/work
+traitlets==5.0.5
+typing-extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1602702424206/work
+tzlocal==2.1
+urllib3==1.26.5
+validators==0.18.2
+watchdog==2.1.2
+wcwidth==0.2.5
+webencodings==0.5.1
+widgetsnbextension==3.5.1
+wincertstore==0.2
+xarray @ file:///home/conda/feedstock_root/build_artifacts/xarray_1621474818012/work
